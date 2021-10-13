@@ -1,0 +1,10 @@
+*.d
+*.o
+*.so
+*.obj
+*.gch
+*.pch
+*.dylib
+*.DS_Store
+
+build/*
