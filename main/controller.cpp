@@ -25,6 +25,7 @@ Controller::Controller(const std::string name, const std::string manufacturer) :
 
   // Enact the Clean Slate Protocol
   resetButtons();
+  initialize();
 }
 
 void Controller::press(Button btn) {
