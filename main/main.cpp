@@ -3,98 +3,58 @@
 #include <memory>
 #include <ostream>
 #include <iostream>
+
 #include "sdkconfig.h"
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <esp_system.h>
-#include <esp_spi_flash.h>
-#include <driver/gpio.h>
+// #include <freertos/FreeRTOS.h>
+// #include <freertos/task.h>
 #include <esp_event.h>
 
-#include "NimBLEDevice.h"
-#include "NimBLEHIDDevice.h"
-
-#include "button.h"
 #include "singleton.h"
+#include "controller.h"
 
 extern "C" {
   void app_main(void);
 }
 
-class BleConnectionStatus : public NimBLEServerCallbacks
-{
-public:
-  BleConnectionStatus(void);
-  bool connected = false;
-  void onConnect(NimBLEServer* pServer);
-  void onDisconnect(NimBLEServer* pServer);
-  NimBLECharacteristic* inputGamepad;
-};
-
-BleConnectionStatus::BleConnectionStatus(void) {}
-
-void BleConnectionStatus::onConnect(NimBLEServer* pServer) {
-  this->connected = true;
-}
-
-void BleConnectionStatus::onDisconnect(NimBLEServer* pServer) {
-  this->connected = false;
-}
-
 class Application : public Singleton<Application> {
 public:
-  Application()  {
-    m_connection_status = new BleConnectionStatus();
-  }
-
-  ~Application() { }
-
-  BleConnectionStatus* connection_status() {
-    return m_connection_status;
-  }
-
-  protected:
-
-  BleConnectionStatus* m_connection_status;
+  Application() {}
+  ~Application() {}
 };
 
-static void button_task(void* pParams) {
-  button_event_t ev;
-  QueueHandle_t button_events = button_init(PIN_BIT(GPIO_NUM_23));
-  // gpio_set_pull_mode(GPIO_NUM_23, GPIO_PULLUP_ONLY);
+// static void button_task(void* pParams) {
+//   button_event_t ev;
+//   QueueHandle_t button_events = button_init(PIN_BIT(BUTTON_1_PIN) | PIN_BIT(BUTTON_2_PIN) | PIN_BIT(BUTTON_3_PIN) | PIN_BIT(BUTTON_4_PIN) | PIN_BIT(BUTTON_5_PIN) | PIN_BIT(BUTTON_6_PIN));
 
-  while (true) {
-    if (xQueueReceive(button_events, &ev, 1000 / portTICK_PERIOD_MS)) {
-      if ((ev.pin == GPIO_NUM_23) && (ev.event == BUTTON_DOWN)) {
-        std::cout << "######### BUTTON PRESSED #########" << std::endl;
-      }
-    }
-  }
-}
+//   while (true) {
+//     if (xQueueReceive(button_events, &ev, 1000 / portTICK_PERIOD_MS)) {
+//       if ((ev.pin == BUTTON_1_PIN) && (ev.event == BUTTON_DOWN)) {
+//         std::cout << "######### BUTTON 1 PRESSED #########" << std::endl;
+//       }
+
+//       if ((ev.pin == BUTTON_2_PIN) && (ev.event == BUTTON_DOWN)) {
+//         std::cout << "######### BUTTON 2 PRESSED #########" << std::endl;
+//       }
+
+//       if ((ev.pin == BUTTON_3_PIN) && (ev.event == BUTTON_DOWN)) {
+//         std::cout << "######### BUTTON 3 PRESSED #########" << std::endl;
+//       }
+
+//       if ((ev.pin == BUTTON_4_PIN) && (ev.event == BUTTON_DOWN)) {
+//         std::cout << "######### BUTTON 4 PRESSED #########" << std::endl;
+//       }
+
+//       if ((ev.pin == BUTTON_5_PIN) && (ev.event == BUTTON_DOWN)) {
+//         std::cout << "######### BUTTON 5 PRESSED #########" << std::endl;
+//       }
+
+//       if ((ev.pin == BUTTON_6_PIN) && (ev.event == BUTTON_DOWN)) {
+//         std::cout << "######### BUTTON 6 PRESSED #########" << std::endl;
+//       }
+//     }
+//   }
+// }
 
 void app_main(void) {
   esp_event_loop_create_default();
-
-  NimBLEDevice::init("Twister's Shifter");
-
-  NimBLEServer *pServer = NimBLEDevice::createServer();
-  pServer->setCallbacks(Application::instance().connection_status());
-
-  auto hid = new NimBLEHIDDevice(pServer);
-  hid->manufacturer()->setValue("Bounce Puppy");
-  hid->pnp(0x01, 0x02e5, 0xabbb, 0x0110);
-  hid->hidInfo(0x00, 0x01);
-
-  NimBLESecurity *pSecurity = new NimBLESecurity();
-
-  pSecurity->setAuthenticationMode(ESP_LE_AUTH_BOND);
-
-  hid->startServices();
-
-  NimBLEAdvertising *pAdvertising = pServer->getAdvertising();
-  pAdvertising->setAppearance(HID_GAMEPAD);
-  pAdvertising->addServiceUUID(hid->hidService()->getUUID());
-  pAdvertising->start();
-
-  xTaskCreate(button_task, "button_task", 4096, NULL, 0, NULL);
 }

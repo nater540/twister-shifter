@@ -1,11 +1,12 @@
-# Buster Materia Firmware
+# Twister Shifter
+
+This is a WIP bluetooth low energy racing sim controller running on an ESP32 & built using 3D printed parts.
 
 ```shell
 ESPPORT=/dev/cu.usbserial-0001
 ESPBAUD=115200
 ninja flash -C build
 ```
-
 
 Type `idf.py --help` for a list of commands. Here are a summary of the most useful ones:
 
